@@ -6,8 +6,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/DaanV2/go-chess/pkg/extensions/xio"
 	"github.com/charmbracelet/log"
+	"github.com/daanv2/go-force-inline/pkg/extensions/xio"
 	"github.com/stretchr/testify/require"
 )
 
