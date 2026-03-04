@@ -7,45 +7,39 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newGenerateCmd() *cobra.Command {
-	var (
-		output  string
-		verbose bool
-	)
-
-	cmd := &cobra.Command{
-		Use:   "generate [packages]",
-		Short: "Generate a synthetic PGO profile from //pgogen:hot directives",
-		Long: `Scans Go source files matching the given package patterns for
+var generateCmd = &cobra.Command{
+	Use:   "generate [packages]",
+	Short: "Generate a synthetic PGO profile from //pgogen:hot directives",
+	Long: `Scans Go source files matching the given package patterns for
 //pgogen:hot directives, resolves caller/callee linker symbols,
 and writes a synthetic pprof profile.`,
-		Aliases: []string{"gen"},
-		Args:    cobra.MinimumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if verbose {
-				log.SetLevel(log.DebugLevel)
-			}
+	Aliases: []string{"gen"},
+	Args:    cobra.MinimumNArgs(1),
+	RunE:    runGenerate,
+}
 
-			log.Info("scanning packages", "patterns", args)
+func init() {
+	rootCmd.AddCommand(generateCmd)
+	generateCmd.Flags().StringP("output", "o", "default.pgo", "Output file path")
+}
 
-			edges, err := resolver.Resolve(args, verbose)
-			if err != nil {
-				return err
-			}
+func runGenerate(cmd *cobra.Command, args []string) error {
+	output, _ := cmd.Flags().GetString("output")
 
-			if len(edges) == 0 {
-				log.Warn("no //pgogen:hot directives found")
-				return nil
-			}
+	log.Info("scanning packages", "patterns", args)
 
-			log.Info("found directives", "count", len(edges))
-
-			return profgen.Generate(edges, output, verbose)
-		},
+	edges, err := resolver.Resolve(args)
+	if err != nil {
+		return err
 	}
 
-	cmd.Flags().StringVarP(&output, "output", "o", "default.pgo", "Output file path")
-	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output: print discovered directives and generated edges")
+	if len(edges) == 0 {
+		log.Warn("no //pgogen:hot directives found")
 
-	return cmd
+		return nil
+	}
+
+	log.Info("found directives", "count", len(edges))
+
+	return profgen.Generate(edges, output)
 }

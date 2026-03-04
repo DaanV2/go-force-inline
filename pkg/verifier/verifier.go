@@ -103,5 +103,6 @@ func locationFuncName(loc *profile.Location) string {
 	if len(loc.Line) > 0 && loc.Line[0].Function != nil {
 		return loc.Line[0].Function.Name
 	}
+
 	return fmt.Sprintf("unknown@%d", loc.ID)
 }

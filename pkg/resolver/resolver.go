@@ -26,7 +26,7 @@ type ResolvedEdge struct {
 
 // Resolve takes package patterns, loads them with full type info, finds
 // directives, and resolves caller/callee linker symbols.
-func Resolve(patterns []string, verbose bool) ([]ResolvedEdge, error) {
+func Resolve(patterns []string) ([]ResolvedEdge, error) {
 	cfg := &packages.Config{
 		Mode: packages.NeedName |
 			packages.NeedFiles |
@@ -60,7 +60,7 @@ func Resolve(patterns []string, verbose bool) ([]ResolvedEdge, error) {
 		for _, file := range pkg.Syntax {
 			directives := directive.FindDirectives(cfg.Fset, file)
 			for _, d := range directives {
-				edge, ok := resolveDirective(cfg.Fset, pkg, file, d, verbose)
+				edge, ok := resolveDirective(cfg.Fset, pkg, file, d)
 				if ok {
 					edges = append(edges, edge)
 				}
@@ -76,12 +76,12 @@ func resolveDirective(
 	pkg *packages.Package,
 	file *ast.File,
 	d directive.DirectiveWithNode,
-	verbose bool,
 ) (ResolvedEdge, bool) {
 	if d.Node == nil {
 		log.Warn("directive not followed by a call expression",
 			"file", d.Directive.Pos.Filename,
 			"line", d.Directive.Pos.Line)
+
 		return ResolvedEdge{}, false
 	}
 
@@ -90,6 +90,7 @@ func resolveDirective(
 		log.Warn("directive not followed by a call expression",
 			"file", d.Directive.Pos.Filename,
 			"line", d.Directive.Pos.Line)
+
 		return ResolvedEdge{}, false
 	}
 
@@ -99,6 +100,7 @@ func resolveDirective(
 		log.Warn("directive not inside a function",
 			"file", d.Directive.Pos.Filename,
 			"line", d.Directive.Pos.Line)
+
 		return ResolvedEdge{}, false
 	}
 
@@ -132,13 +134,11 @@ func resolveDirective(
 			fmt.Sprintf("chained calls on line %d - ambiguous which call is targeted", callPos.Line))
 	}
 
-	if verbose {
-		log.Info("resolved edge",
-			"caller", edge.CallerName,
-			"callee", edge.CalleeName,
-			"offset", edge.CallSiteOffset,
-			"weight", edge.Weight)
-	}
+	log.Debug("resolved edge",
+		"caller", edge.CallerName,
+		"callee", edge.CalleeName,
+		"offset", edge.CallSiteOffset,
+		"weight", edge.Weight)
 
 	for _, w := range edge.Warnings {
 		log.Warn(w,
@@ -162,6 +162,7 @@ func resolveFunc(fset *token.FileSet, pkg *packages.Package, fn *ast.FuncDecl) (
 			recvType := exprString(fn.Recv.List[0].Type)
 			name = pkg.PkgPath + "." + recvType + "." + fn.Name.Name
 		}
+
 		return name, startLine, warnings
 	}
 
@@ -203,11 +204,13 @@ func resolveCallee(fset *token.FileSet, pkg *packages.Package, call *ast.CallExp
 	default:
 		log.Warn("cannot resolve callee - unsupported call expression type",
 			"type", fmt.Sprintf("%T", call.Fun))
+
 		return "", 0, warnings, false
 	}
 
 	if ident == nil {
 		log.Warn("cannot resolve callee identifier")
+
 		return "", 0, warnings, false
 	}
 
@@ -220,6 +223,7 @@ func resolveCallee(fset *token.FileSet, pkg *packages.Package, call *ast.CallExp
 	if obj == nil {
 		log.Warn("cannot resolve callee - no type info",
 			"name", ident.Name)
+
 		return "", 0, warnings, false
 	}
 
@@ -229,6 +233,7 @@ func resolveCallee(fset *token.FileSet, pkg *packages.Package, call *ast.CallExp
 		log.Warn("callee is not a function",
 			"name", ident.Name,
 			"type", fmt.Sprintf("%T", obj))
+
 		return "", 0, warnings, false
 	}
 
@@ -239,6 +244,7 @@ func resolveCallee(fset *token.FileSet, pkg *packages.Package, call *ast.CallExp
 		if isInterface(recvType) {
 			log.Warn("interface method call cannot be inlined",
 				"method", funcObj.Name())
+
 			return "", 0, warnings, false
 		}
 	}
@@ -283,6 +289,7 @@ func linkerSymbol(fn *types.Func) string {
 
 	// Method
 	recv := sig.Recv().Type()
+
 	return recvLinkerName(fn.Pkg().Path(), recv, fn.Name())
 }
 
@@ -297,6 +304,7 @@ func recvLinkerName(pkgPath string, recv types.Type, methodName string) string {
 	case *types.Named:
 		return pkgPath + "." + t.Obj().Name() + "." + methodName
 	}
+
 	return pkgPath + "." + recv.String() + "." + methodName
 }
 
@@ -313,6 +321,7 @@ func findEnclosingFunc(fset *token.FileSet, file *ast.File, line int) *ast.FuncD
 			return fn
 		}
 	}
+
 	return nil
 }
 
@@ -333,6 +342,7 @@ func findFuncDeclForObj(pkg *packages.Package, fn *types.Func) *ast.FuncDecl {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -346,6 +356,7 @@ func hasNoInlineDirective(fn *ast.FuncDecl) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -353,6 +364,7 @@ func hasNoInlineDirective(fn *ast.FuncDecl) bool {
 func isInterface(t types.Type) bool {
 	t = t.Underlying()
 	_, ok := t.(*types.Interface)
+
 	return ok
 }
 
@@ -366,8 +378,10 @@ func isClosure(fn *types.Func) bool {
 				return false
 			}
 		}
+
 		return true
 	}
+
 	return false
 }
 
@@ -378,6 +392,7 @@ func hasChainedCalls(call *ast.CallExpr) bool {
 			return true
 		}
 	}
+
 	return false
 }
 

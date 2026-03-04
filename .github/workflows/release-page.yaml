@@ -1,0 +1,23 @@
+name: 📑 Release Page
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  tagged-release:
+    name: 📑 Release Page
+    runs-on: "ubuntu-latest"
+    permissions:
+      contents: write
+    steps:
+      - name: 📦 Checkout repository
+        uses: actions/checkout@v6
+
+      - name: 📑 Release Page
+        uses: ncipollo/release-action@v1
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          generateReleaseNotes: true
+          makeLatest: true

@@ -118,9 +118,11 @@ func findNextCall(fset *token.FileSet, file *ast.File, commentLine int) ast.Node
 		if pos.Line == targetLine {
 			if call, ok := n.(*ast.CallExpr); ok {
 				found = call
+
 				return false
 			}
 		}
+
 		return true
 	})
 

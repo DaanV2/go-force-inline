@@ -7,21 +7,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newVerifyCmd() *cobra.Command {
-	var threshold float64
-
-	cmd := &cobra.Command{
-		Use:   "verify <profile.pgo>",
-		Short: "Verify which edges in a profile are hot",
-		Long: `Reads a pprof profile, sorts edges by weight, prints each edge
+var verifyCmd = &cobra.Command{
+	Use:   "verify <profile.pgo>",
+	Short: "Verify which edges in a profile are hot",
+	Long: `Reads a pprof profile, sorts edges by weight, prints each edge
 with its CDF percentage, and marks which ones fall within the hot threshold.`,
-		Args: cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return verifier.Verify(args[0], threshold, os.Stdout)
-		},
-	}
+	Args: cobra.ExactArgs(1),
+	RunE: runVerify,
+}
 
-	cmd.Flags().Float64Var(&threshold, "threshold", 99.0, "CDF hot threshold percentage")
+func init() {
+	rootCmd.AddCommand(verifyCmd)
+	verifyCmd.Flags().Float64("threshold", 99.0, "CDF hot threshold percentage")
+}
 
-	return cmd
+func runVerify(cmd *cobra.Command, args []string) error {
+	threshold, _ := cmd.Flags().GetFloat64("threshold")
+
+	return verifier.Verify(args[0], threshold, os.Stdout)
 }
