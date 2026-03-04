@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/charmbracelet/log"
+	"github.com/daanv2/go-force-inline/pkg/extensions/xio"
 	"github.com/daanv2/go-force-inline/pkg/resolver"
 	"github.com/google/pprof/profile"
 )
@@ -66,11 +67,11 @@ func Generate(edges []resolver.ResolvedEdge, outputPath string) error {
 	// Validate CDF - since we control all edges and all are hot, this is trivially satisfied
 	validateCDF(edges)
 
-	f, err := os.Create(outputPath)
+	f, err := os.Create(outputPath) //nolint:gosec // outputPath is from CLI flag, not user-controlled input
 	if err != nil {
 		return fmt.Errorf("creating output file: %w", err)
 	}
-	defer f.Close()
+	defer xio.CloseReport(f, nil)
 
 	if err := p.Write(f); err != nil {
 		return fmt.Errorf("writing profile: %w", err)

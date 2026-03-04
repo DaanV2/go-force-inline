@@ -150,14 +150,13 @@ func resolveDirective(
 }
 
 // resolveFunc resolves a function declaration to its linker symbol name.
-func resolveFunc(fset *token.FileSet, pkg *packages.Package, fn *ast.FuncDecl) (string, int, []string) {
-	startLine := fset.Position(fn.Pos()).Line
-	var warnings []string
+func resolveFunc(fset *token.FileSet, pkg *packages.Package, fn *ast.FuncDecl) (name string, startLine int, warnings []string) {
+	startLine = fset.Position(fn.Pos()).Line
 
 	obj := pkg.TypesInfo.Defs[fn.Name]
 	if obj == nil {
 		// Fallback: construct name manually
-		name := pkg.PkgPath + "." + fn.Name.Name
+		name = pkg.PkgPath + "." + fn.Name.Name
 		if fn.Recv != nil && len(fn.Recv.List) > 0 {
 			recvType := exprString(fn.Recv.List[0].Type)
 			name = pkg.PkgPath + "." + recvType + "." + fn.Name.Name
@@ -166,8 +165,8 @@ func resolveFunc(fset *token.FileSet, pkg *packages.Package, fn *ast.FuncDecl) (
 		return name, startLine, warnings
 	}
 
-	funcObj, ok := obj.(*types.Func)
-	if !ok {
+	funcObj, isFuncObj := obj.(*types.Func)
+	if !isFuncObj {
 		return pkg.PkgPath + "." + fn.Name.Name, startLine, warnings
 	}
 
@@ -175,9 +174,7 @@ func resolveFunc(fset *token.FileSet, pkg *packages.Package, fn *ast.FuncDecl) (
 }
 
 // resolveCallee resolves the called function/method to its linker symbol.
-func resolveCallee(fset *token.FileSet, pkg *packages.Package, call *ast.CallExpr) (string, int, []string, bool) {
-	var warnings []string
-
+func resolveCallee(fset *token.FileSet, pkg *packages.Package, call *ast.CallExpr) (name string, startLine int, warnings []string, ok bool) {
 	// Get the callee identifier
 	var ident *ast.Ident
 	switch fn := call.Fun.(type) {
@@ -227,8 +224,8 @@ func resolveCallee(fset *token.FileSet, pkg *packages.Package, call *ast.CallExp
 		return "", 0, warnings, false
 	}
 
-	funcObj, ok := obj.(*types.Func)
-	if !ok {
+	funcObj, isFunc := obj.(*types.Func)
+	if !isFunc {
 		// Could be a builtin or type conversion
 		log.Warn("callee is not a function",
 			"name", ident.Name,
@@ -258,7 +255,7 @@ func resolveCallee(fset *token.FileSet, pkg *packages.Package, call *ast.CallExp
 		}
 	}
 
-	name := linkerSymbol(funcObj)
+	name = linkerSymbol(funcObj)
 
 	// Determine callee start line
 	var calleeStartLine int

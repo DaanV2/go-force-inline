@@ -22,7 +22,7 @@ benchmark-package package:
 	go test -benchmem -run=^$$ -benchtime 10s -cpuprofile ./cpu-{{package}}.pprof -bench . ./tests/benchmarks/{{package}}
 
 lint:
-	go tool golangci-lint run -v --fix
+	go tool golangci-lint run -v --fix ./...
 
 format:
 	go fmt ./...
