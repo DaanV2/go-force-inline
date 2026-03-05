@@ -20,8 +20,10 @@ func Generate(edges []resolver.ResolvedEdge, outputPath string) error {
 
 	p := &profile.Profile{
 		SampleType: []*profile.ValueType{
-			{Type: "samples", Unit: "count"},
+			{Type: "cpu", Unit: "nanoseconds"},
 		},
+		PeriodType: &profile.ValueType{Type: "cpu", Unit: "nanoseconds"},
+		Period:     1e6, // 1ms sampling period
 	}
 
 	// Track functions and locations by name to dedup
