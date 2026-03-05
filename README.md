@@ -4,11 +4,10 @@ A Go CLI tool that generates synthetic PGO (Profile-Guided Optimization) profile
 
 > [!IMPORTANT]
 > NOTE: While this tool can help with speeding up, some notes:
-
-1. The tool generates synthetic profiles, This can't really replace real PGO profiles, and is potentially alot more work.
-   1. Whoevere with fast moving codebases, this can help with keeping up fast
-   2. It can collide with real PGO profiles, so be careful when using both
-2. The tool is not perfect, and can miss some call sites, or generate invalid profiles
+> 1. The tool generates synthetic profiles, This can't really replace real PGO profiles, and is potentially alot more work.
+>    1. Whoevere with fast moving codebases, this can help with keeping up fast
+>    2. It can collide with real PGO profiles, so be careful when using both
+> 2. The tool is not perfect, and can miss some call sites, or generate invalid profiles
 
 
 ## Setup
