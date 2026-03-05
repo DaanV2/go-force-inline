@@ -14,11 +14,12 @@ import (
 
 // rootCmd is the top-level cobra command.
 var rootCmd = &cobra.Command{
-	Use:   "pgogen",
+	Use:   "go-force-inline",
 	Short: "Generate synthetic PGO profiles from source directives",
-	Long: `pgogen scans Go source files for //pgogen:hot comment directives and
+	Long: `go-force-inline scans Go source files for //pgogen:hot comment directives and
 generates a synthetic pprof CPU profile (default.pgo) that causes the
 Go compiler's PGO inliner to treat annotated call sites as "hot."`,
+	Example:          `go-force-inline generate ./...\ngo-force-inline verify default.pgo`,
 	PersistentPreRun: logging.ApplyLoggerFlags,
 }
 

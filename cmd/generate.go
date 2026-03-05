@@ -13,6 +13,7 @@ var generateCmd = &cobra.Command{
 	Long: `Scans Go source files matching the given package patterns for
 //pgogen:hot directives, resolves caller/callee linker symbols,
 and writes a synthetic pprof profile.`,
+	Example: "go-force-inline generate ./...",
 	Aliases: []string{"gen"},
 	Args:    cobra.MinimumNArgs(1),
 	RunE:    runGenerate,

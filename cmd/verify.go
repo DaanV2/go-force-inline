@@ -12,8 +12,9 @@ var verifyCmd = &cobra.Command{
 	Short: "Verify which edges in a profile are hot",
 	Long: `Reads a pprof profile, sorts edges by weight, prints each edge
 with its CDF percentage, and marks which ones fall within the hot threshold.`,
-	Args: cobra.ExactArgs(1),
-	RunE: runVerify,
+	Example: "go-force-inline verify default.pgo",
+	Args:    cobra.ExactArgs(1),
+	RunE:    runVerify,
 }
 
 func init() {
