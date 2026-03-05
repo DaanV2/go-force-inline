@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/daanv2/go-force-inline/pkg/extensions/xio"
@@ -20,7 +21,8 @@ type Edge struct {
 
 // Verify reads a pprof profile and prints a CDF analysis of its edges,
 // marking which ones fall within the hot threshold.
-func Verify(profilePath string, threshold float64, w io.Writer) error {
+// When short is true, function names are shortened to just type and method.
+func Verify(profilePath string, threshold float64, short bool, w io.Writer) error {
 	f, err := os.Open(profilePath) //nolint:gosec // profilePath is from CLI arg, not user-controlled input
 	if err != nil {
 		return fmt.Errorf("opening profile: %w", err)
@@ -88,7 +90,14 @@ func Verify(profilePath string, threshold float64, w io.Writer) error {
 			hot = "yes"
 		}
 
-		edgeStr := fmt.Sprintf("%s → %s", e.Caller, e.Callee)
+		caller := e.Caller
+		callee := e.Callee
+		if short {
+			caller = shortenName(caller)
+			callee = shortenName(callee)
+		}
+
+		edgeStr := fmt.Sprintf("%s → %s", caller, callee)
 		_, _ = fmt.Fprintf(tw, "%s\t%d\t%.1f%%\t%s\n", edgeStr, e.Weight, cdfPct, hot)
 	}
 
@@ -106,4 +115,18 @@ func locationFuncName(loc *profile.Location) string {
 	}
 
 	return fmt.Sprintf("unknown@%d", loc.ID)
+}
+
+// shortenName strips the package path, keeping only the last package segment,
+// type, and method. e.g.:
+//   "github.com/user/pkg/sub.(*Type).Method" → "sub.(*Type).Method"
+//   "github.com/user/pkg.Func"               → "pkg.Func"
+func shortenName(name string) string {
+	// Find the last '/' to get the last package segment
+	slashIdx := strings.LastIndex(name, "/")
+	if slashIdx >= 0 {
+		return name[slashIdx+1:]
+	}
+
+	return name
 }

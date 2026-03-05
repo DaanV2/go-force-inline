@@ -47,7 +47,7 @@ func TestGenerateAndVerify(t *testing.T) {
 
 	// Step 3: Verify the profile
 	var buf bytes.Buffer
-	err = verifier.Verify(outputPath, 99.0, &buf)
+	err = verifier.Verify(outputPath, 99.0, false, &buf)
 	require.NoError(t, err)
 
 	output := buf.String()
