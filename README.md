@@ -2,6 +2,15 @@
 
 A Go CLI tool that generates synthetic PGO (Profile-Guided Optimization) profiles from source code directives. Annotate call sites with `//pgogen:hot` comments to force the Go compiler's PGO inliner to treat them as hot, increasing the inlining budget from 80 to 2000 AST nodes.
 
+> [!IMPORTANT]
+> NOTE: While this tool can help with speeding up, some notes:
+
+1. The tool generates synthetic profiles, This can't really replace real PGO profiles, and is potentially alot more work.
+   1. Whoevere with fast moving codebases, this can help with keeping up fast
+   2. It can collide with real PGO profiles, so be careful when using both
+2. The tool is not perfect, and can miss some call sites, or generate invalid profiles
+
+
 ## Setup
 
 Add the tool to your project:
